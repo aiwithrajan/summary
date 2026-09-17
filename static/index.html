@@ -45,99 +45,136 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
-            justify-content: center;
         }
 
-        /* --- MAIN CONTENT (Full-width Centered) --- */
-        #main-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 30px 40px;
-            max-width: 1100px;
-            width: 100%;
+        /* --- TOOLS SIDEBAR (MATCHING USER SKETCH) --- */
+        #sidebar {
+            width: 320px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            padding: 24px 18px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            gap: 8px;
         }
 
-        .sidebar-header {
+        .sidebar-title-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-tools-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-bottom: 24px;
         }
 
-        .sidebar-header i {
+        .sidebar-tools-subtitle {
+            font-size: 0.76rem;
             color: var(--text-muted);
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        .tool-flow-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
 
-        .form-label {
+        .tool-flow-card {
+            width: 100%;
+            background-color: #1a1f2c;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: all 0.25s ease;
+        }
+
+        .tool-flow-card.executed {
+            border-color: var(--accent-green);
+            background-color: rgba(0, 210, 106, 0.08);
+        }
+
+        .tool-flow-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 8px;
         }
 
-        .form-control {
-            width: 100%;
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 10px 14px;
-            color: var(--text-main);
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-blue);
-        }
-
-        select.form-control {
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 16px;
-            cursor: pointer;
-        }
-
-        .range-slider {
-            width: 100%;
-            accent-color: var(--primary-red);
-            cursor: pointer;
-        }
-
-        .slider-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .divider {
-            height: 1px;
-            background-color: var(--border-color);
-            margin: 16px 0 20px 0;
-        }
-
-        .section-title {
-            font-size: 0.95rem;
+        .tool-flow-name {
+            font-size: 0.88rem;
             font-weight: 700;
-            color: var(--text-main);
-            margin-bottom: 16px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-flow-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background-color: #12151e;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .tool-flow-card.executed .tool-flow-badge {
+            background-color: rgba(0, 210, 106, 0.2);
+            color: var(--accent-green);
+            border-color: rgba(0, 210, 106, 0.4);
+        }
+
+        .tool-flow-desc {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
+        .tool-flow-arrow {
+            color: #3b4252;
+            font-size: 1.1rem;
+            margin: 2px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .tool-flow-arrow.active {
+            color: var(--accent-green);
+        }
+
+        /* "NOW READY TO GO FOR LLM" BANNER */
+        .ready-llm-banner {
+            width: 100%;
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            text-align: center;
+            background-color: #151922;
+            border: 1px dashed var(--border-color);
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .ready-llm-banner.ready {
+            background: linear-gradient(135deg, rgba(26, 115, 232, 0.2), rgba(0, 210, 106, 0.25));
+            border: 1px solid var(--accent-green);
+            color: #ffffff;
+            box-shadow: 0 0 14px rgba(0, 210, 106, 0.25);
         }
 
         /* --- MAIN CONTENT --- */
@@ -690,6 +727,78 @@
 </head>
 <body>
 
+    <!-- TOOLS SIDEBAR (MATCHING EXACT USER SKETCH) -->
+    <aside id="sidebar">
+        <div class="sidebar-title-row">
+            <div class="sidebar-tools-title">
+                <i class="fa-solid fa-diagram-project" style="color: var(--primary-blue);"></i>
+                <span>Tools</span>
+            </div>
+            <div class="sidebar-tools-subtitle">
+                Deterministic Pre-Processing Pipeline
+            </div>
+        </div>
+
+        <div class="tool-flow-container">
+            <!-- Tool 1 -->
+            <div class="tool-flow-card" id="flowTool1">
+                <div class="tool-flow-header">
+                    <span class="tool-flow-name"><i class="fa-solid fa-file-code" style="color: #58a6ff;"></i> Tool 1: JSON Formatter</span>
+                    <span class="tool-flow-badge" id="badgeFlowTool1">Wait</span>
+                </div>
+                <div class="tool-flow-desc">Converts raw PDF layout into structured schema hierarchy & tables.</div>
+            </div>
+
+            <!-- Arrow 1 -->
+            <div class="tool-flow-arrow" id="arrow1"><i class="fa-solid fa-arrow-down"></i></div>
+
+            <!-- Tool 2 -->
+            <div class="tool-flow-card" id="flowTool2">
+                <div class="tool-flow-header">
+                    <span class="tool-flow-name"><i class="fa-solid fa-broom" style="color: #f0883e;"></i> Tool 2: Noise Sanitizer</span>
+                    <span class="tool-flow-badge" id="badgeFlowTool2">Wait</span>
+                </div>
+                <div class="tool-flow-desc">Strips running headers, page numbers, footers & ligatures.</div>
+            </div>
+
+            <!-- Arrow 2 -->
+            <div class="tool-flow-arrow" id="arrow2"><i class="fa-solid fa-arrow-down"></i></div>
+
+            <!-- Tool 3 -->
+            <div class="tool-flow-card" id="flowTool3">
+                <div class="tool-flow-header">
+                    <span class="tool-flow-name"><i class="fa-solid fa-calculator" style="color: #a371f7;"></i> Tool 3: Table Analytics</span>
+                    <span class="tool-flow-badge" id="badgeFlowTool3">Wait</span>
+                </div>
+                <div class="tool-flow-desc">Computes mathematical deltas, column comparisons & stats.</div>
+            </div>
+
+            <!-- Arrow 3 -->
+            <div class="tool-flow-arrow" id="arrow3"><i class="fa-solid fa-arrow-down"></i></div>
+
+            <!-- Now Ready To Go For LLM Banner -->
+            <div class="ready-llm-banner" id="readyLlmBanner">
+                <div style="font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i class="fa-solid fa-circle-check" style="color: var(--accent-green);"></i>
+                    <span>Now ready to go for LLM</span>
+                </div>
+                <div style="font-size: 0.72rem; margin-top: 4px; opacity: 0.85;">Deterministic JSON context prepared</div>
+            </div>
+
+            <!-- Arrow 4 -->
+            <div class="tool-flow-arrow" id="arrow4"><i class="fa-solid fa-arrow-down"></i></div>
+
+            <!-- Tool 4 -->
+            <div class="tool-flow-card" id="flowTool4">
+                <div class="tool-flow-header">
+                    <span class="tool-flow-name"><i class="fa-solid fa-shield-halved" style="color: var(--accent-green);"></i> Tool 4: Fact Checker</span>
+                    <span class="tool-flow-badge" id="badgeFlowTool4">Post-LLM</span>
+                </div>
+                <div class="tool-flow-desc" id="flowTool4Desc">Validates citations & statistics against document ground-truth.</div>
+            </div>
+        </div>
+    </aside>
+
     <!-- HIDDEN CONFIG INPUTS -->
     <input type="hidden" id="apiKeyInput" value="">
     <input type="hidden" id="modelSelect" value="gemini-2.5-flash">
@@ -941,6 +1050,22 @@
         const badgeFileSize = document.getElementById('badgeFileSize');
         const removeFileBtn = document.getElementById('removeFileBtn');
 
+        // Sidebar Tools Pipeline Elements (Matching User Sketch)
+        const flowTool1 = document.getElementById('flowTool1');
+        const badgeFlowTool1 = document.getElementById('badgeFlowTool1');
+        const arrow1 = document.getElementById('arrow1');
+        const flowTool2 = document.getElementById('flowTool2');
+        const badgeFlowTool2 = document.getElementById('badgeFlowTool2');
+        const arrow2 = document.getElementById('arrow2');
+        const flowTool3 = document.getElementById('flowTool3');
+        const badgeFlowTool3 = document.getElementById('badgeFlowTool3');
+        const arrow3 = document.getElementById('arrow3');
+        const readyLlmBanner = document.getElementById('readyLlmBanner');
+        const arrow4 = document.getElementById('arrow4');
+        const flowTool4 = document.getElementById('flowTool4');
+        const badgeFlowTool4 = document.getElementById('badgeFlowTool4');
+        const flowTool4Desc = document.getElementById('flowTool4Desc');
+
         const pipelineBox = document.getElementById('pipelineBox');
         const pipelineStatusText = document.getElementById('pipelineStatusText');
         const cardTool4 = document.getElementById('cardTool4');
@@ -1064,6 +1189,17 @@
             }
         });
 
+        function resetSidebarTools() {
+            [flowTool1, flowTool2, flowTool3, flowTool4].forEach(el => el.classList.remove('executed'));
+            [arrow1, arrow2, arrow3, arrow4].forEach(el => el.classList.remove('active'));
+            readyLlmBanner.classList.remove('ready');
+            badgeFlowTool1.textContent = 'Wait';
+            badgeFlowTool2.textContent = 'Wait';
+            badgeFlowTool3.textContent = 'Wait';
+            badgeFlowTool4.textContent = 'Post-LLM';
+            flowTool4Desc.textContent = 'Validates citations & statistics against document ground-truth.';
+        }
+
         removeFileBtn.addEventListener('click', () => {
             currentFile = null;
             currentStructuredJson = null;
@@ -1078,6 +1214,7 @@
             inferredTitleRow.style.display = 'none';
             summaryContent.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">Upload a PDF to begin.</p>';
             summaryActions.style.display = 'none';
+            resetSidebarTools();
         });
 
         async function handleFileUpload(file) {
@@ -1086,6 +1223,7 @@
                 return;
             }
 
+            resetSidebarTools();
             currentFile = file;
             badgeFileName.textContent = file.name;
             badgeFileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
@@ -1115,13 +1253,28 @@
                 pipelineBox.style.display = 'block';
                 pipelineStatusText.textContent = 'Tools 1, 2, 3 Executed';
 
+                // Activate Sidebar Tool 1, 2, 3 and LLM Ready Banner
+                flowTool1.classList.add('executed');
+                badgeFlowTool1.textContent = 'Executed';
+                arrow1.classList.add('active');
+
+                flowTool2.classList.add('executed');
+                badgeFlowTool2.textContent = 'Executed';
+                arrow2.classList.add('active');
+
+                flowTool3.classList.add('executed');
+                badgeFlowTool3.textContent = 'Executed';
+                arrow3.classList.add('active');
+
+                readyLlmBanner.classList.add('ready');
+
                 // Fetch the structured JSON created by tools
                 const jsonRes = await fetch('/api/structured-json');
                 currentStructuredJson = await jsonRes.json();
                 renderJsonView();
                 renderAnalyticsView();
 
-                showToast('Tools 1, 2, 3 executed successfully!');
+                showToast('Tools 1, 2, 3 executed successfully! Ready for LLM.');
             } catch (err) {
                 showToast(err.message, true);
             }
@@ -1185,10 +1338,18 @@
                 summaryContent.innerHTML = marked.parse(data.summary);
                 summaryActions.style.display = 'flex';
 
-                // Activate Tool 4 card
+                // Activate inline Tool 4 card
                 cardTool4.classList.add('active');
                 if (data.verification) {
                     cardTool4Desc.textContent = `Score: ${data.verification.fact_check_score}% Grounded (${data.verification.valid_citations} valid citations)`;
+                }
+
+                // Activate Sidebar Tool 4
+                arrow4.classList.add('active');
+                flowTool4.classList.add('executed');
+                badgeFlowTool4.textContent = 'Executed';
+                if (data.verification) {
+                    flowTool4Desc.textContent = `Grounded: ${data.verification.fact_check_score}% • ${data.verification.valid_citations} valid page citations verified.`;
                 }
 
                 currentStructuredJson = data.structured_json;
