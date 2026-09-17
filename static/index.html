@@ -45,18 +45,19 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
+            justify-content: center;
         }
 
-        /* --- SIDEBAR --- */
-        #sidebar {
-            width: 320px;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
+        /* --- MAIN CONTENT (Full-width Centered) --- */
+        #main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 40px;
+            max-width: 1100px;
+            width: 100%;
             display: flex;
             flex-direction: column;
-            padding: 24px 20px;
-            overflow-y: auto;
-            flex-shrink: 0;
+            gap: 18px;
         }
 
         .sidebar-header {
@@ -689,70 +690,10 @@
 </head>
 <body>
 
-    <!-- LEFT SIDEBAR -->
-    <aside id="sidebar">
-        <div class="sidebar-header">
-            <i class="fa-solid fa-gear"></i>
-            <span>Agent Settings</span>
-        </div>
-
-        <div class="form-group">
-            <div style="display: flex; align-items: center; gap: 8px; background: rgba(0, 210, 106, 0.1); border: 1px solid rgba(0, 210, 106, 0.3); padding: 9px 12px; border-radius: var(--radius-md); font-size: 0.83rem; color: var(--accent-green);">
-                <i class="fa-solid fa-circle-check"></i>
-                <span style="font-weight: 600;">Google Gemini API Connected</span>
-            </div>
-            <input type="hidden" id="apiKeyInput" value="">
-        </div>
-
-        <div class="form-group">
-            <div class="form-label">
-                <span>Gemini Model</span>
-            </div>
-            <select id="modelSelect" class="form-control">
-                <option value="gemini-2.5-flash" selected>gemini-2.5-flash</option>
-                <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                <option value="gemini-1.5-pro">gemini-1.5-pro</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <div class="form-label">
-                <span>Temperature (Precision vs Creativity)</span>
-                <span id="tempValue" style="color: var(--primary-red); font-weight: 700;">0.20</span>
-            </div>
-            <input type="range" id="tempSlider" class="range-slider" min="0" max="1" step="0.05" value="0.20">
-            <div class="slider-labels">
-                <span>0.00</span>
-                <span>1.00</span>
-            </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="section-title">Summary Configuration</div>
-
-        <div class="form-group">
-            <div class="form-label">
-                <span>Summary Level</span>
-            </div>
-            <select id="summaryLevelSelect" class="form-control">
-                <option value="executive" selected>Executive (Problem, Significance, Results, Limitations)</option>
-                <option value="detailed">Detailed (Section-by-section, In-depth)</option>
-                <option value="medium">Medium (Overview, Concepts, Findings)</option>
-                <option value="short">Short (Purpose, 5-10 Points, Conclusion)</option>
-                <option value="default">Default Structured</option>
-                <option value="custom">Custom Instructions</option>
-            </select>
-        </div>
-
-        <div class="form-group" id="customPromptGroup" style="display: none;">
-            <div class="form-label">
-                <span>Custom Prompt Instructions</span>
-            </div>
-            <textarea id="customPromptInput" class="form-control" rows="4" placeholder="E.g., Generate bullet-point revision notes for a computer science exam..."></textarea>
-        </div>
-    </aside>
+    <!-- HIDDEN CONFIG INPUTS -->
+    <input type="hidden" id="apiKeyInput" value="">
+    <input type="hidden" id="modelSelect" value="gemini-2.5-flash">
+    <input type="hidden" id="tempSlider" value="0.20">
 
     <!-- MAIN CONTENT -->
     <main id="main-content">
@@ -866,11 +807,31 @@
             </button>
         </div>
 
-        <!-- GENERATE BUTTON -->
-        <button class="btn-generate" id="generateBtn">
-            <i class="fa-solid fa-rocket"></i>
-            <span>Generate / Refresh Summary via 4-Tool Pipeline</span>
-        </button>
+        <!-- SUMMARY LEVEL & GENERATE CONTROLS -->
+        <div style="display: flex; gap: 14px; align-items: flex-end; margin-top: 10px;">
+            <div style="flex: 1;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block;">SUMMARY FORMAT LEVEL</label>
+                <select id="summaryLevelSelect" class="form-control" style="background-color: var(--bg-card); cursor: pointer; height: 46px;">
+                    <option value="executive" selected>Executive Summary (Problem, Significance, Results, Limitations)</option>
+                    <option value="detailed">Detailed Analysis (Section-by-section, In-depth)</option>
+                    <option value="medium">Medium Summary (Overview, Concepts, Findings)</option>
+                    <option value="short">Short Digest (Purpose, 5-10 Points, Conclusion)</option>
+                    <option value="default">Default Structured</option>
+                    <option value="custom">Custom Instructions</option>
+                </select>
+            </div>
+            <div style="flex: 1.2;">
+                <button class="btn-generate" id="generateBtn" style="margin-top: 0; height: 46px;">
+                    <i class="fa-solid fa-rocket"></i>
+                    <span>Generate / Refresh Summary via 4-Tool Pipeline</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="form-group" id="customPromptGroup" style="display: none; margin-top: 6px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block;">CUSTOM PROMPT INSTRUCTIONS</label>
+            <textarea id="customPromptInput" class="form-control" rows="3" placeholder="E.g., Generate bullet-point revision notes for an exam..."></textarea>
+        </div>
 
         <!-- TAB 1: SUMMARY -->
         <section class="tab-panel active" id="summaryTab">
@@ -1035,10 +996,7 @@
             }
         });
 
-        // Temperature slider change
-        tempSlider.addEventListener('input', (e) => {
-            tempValue.textContent = parseFloat(e.target.value).toFixed(2);
-        });
+
 
         // Custom prompt show/hide
         summaryLevelSelect.addEventListener('change', (e) => {
