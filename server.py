@@ -37,6 +37,7 @@ CURRENT_ORCHESTRATOR_RESULT: Optional[Dict[str, Any]] = None
 
 UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "pdf_uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+STATE_FILE = os.path.join(tempfile.gettempdir(), "pdf_agent_state.json")
 
 
 class SummarizeRequest(BaseModel):
@@ -71,6 +72,38 @@ async def list_models(api_key: Optional[str] = None):
     return {"models": models}
 
 
+def _save_state(pdf_path: str, structured_json: Dict[str, Any]):
+    try:
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump({"pdf_path": pdf_path, "structured_json": structured_json}, f)
+    except Exception:
+        pass
+
+def _load_state() -> tuple[Optional[str], Optional[Dict[str, Any]]]:
+    global CURRENT_PDF_PATH, CURRENT_STRUCTURED_JSON, CURRENT_DOC
+    if CURRENT_PDF_PATH and os.path.exists(CURRENT_PDF_PATH) and CURRENT_STRUCTURED_JSON:
+        return CURRENT_PDF_PATH, CURRENT_STRUCTURED_JSON
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                p = data.get("pdf_path")
+                sj = data.get("structured_json")
+                if p and os.path.exists(p):
+                    CURRENT_PDF_PATH = p
+                    CURRENT_STRUCTURED_JSON = sj
+                    if not CURRENT_DOC:
+                        try:
+                            extractor = PDFExtractor(p)
+                            CURRENT_DOC = extractor.extract()
+                        except Exception:
+                            pass
+                    return p, sj
+        except Exception:
+            pass
+    return CURRENT_PDF_PATH, CURRENT_STRUCTURED_JSON
+
+
 @app.post("/api/upload")
 async def upload_pdf(file: UploadFile = File(...)):
     global CURRENT_DOC, CURRENT_PDF_PATH, CURRENT_STRUCTURED_JSON
@@ -97,6 +130,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         cleaned_json = t2.execute(raw_json)
         analyzed_json = t3.execute(cleaned_json)
         CURRENT_STRUCTURED_JSON = analyzed_json
+        _save_state(file_path, analyzed_json)
 
         meta = analyzed_json["document_metadata"]
 
@@ -119,7 +153,8 @@ async def upload_pdf(file: UploadFile = File(...)):
 @app.post("/api/summarize")
 async def summarize_pdf(req: SummarizeRequest):
     global CURRENT_PDF_PATH, CURRENT_STRUCTURED_JSON, CURRENT_ORCHESTRATOR_RESULT
-    if not CURRENT_PDF_PATH or not os.path.exists(CURRENT_PDF_PATH):
+    pdf_path, _ = _load_state()
+    if not pdf_path or not os.path.exists(pdf_path):
         raise HTTPException(status_code=400, detail="No PDF has been uploaded yet.")
 
     try:
@@ -133,13 +168,14 @@ async def summarize_pdf(req: SummarizeRequest):
         # Run 4-tool pipeline orchestrator
         orchestrator = ToolDrivenOrchestrator(llm)
         res = orchestrator.process_pdf(
-            CURRENT_PDF_PATH,
+            pdf_path,
             level=req.level,
             custom_instructions=req.custom_prompt
         )
 
         CURRENT_ORCHESTRATOR_RESULT = res
         CURRENT_STRUCTURED_JSON = res["structured_json"]
+        _save_state(pdf_path, res["structured_json"])
 
         return {
             "summary": res["summary"],
@@ -157,14 +193,16 @@ async def summarize_pdf(req: SummarizeRequest):
 @app.get("/api/structured-json")
 async def get_structured_json():
     global CURRENT_STRUCTURED_JSON
-    if not CURRENT_STRUCTURED_JSON:
+    _, sj = _load_state()
+    if not sj:
         raise HTTPException(status_code=400, detail="No structured JSON available yet. Please upload a PDF.")
-    return CURRENT_STRUCTURED_JSON
+    return sj
 
 
 @app.post("/api/qa")
 async def answer_question(req: QARequest):
     global CURRENT_DOC
+    _load_state()
     if not CURRENT_DOC:
         raise HTTPException(status_code=400, detail="No PDF uploaded.")
 
@@ -185,10 +223,11 @@ async def answer_question(req: QARequest):
 @app.get("/api/inspect")
 async def inspect_document():
     global CURRENT_STRUCTURED_JSON, CURRENT_DOC
-    if not CURRENT_STRUCTURED_JSON:
+    _, sj = _load_state()
+    if not sj:
         raise HTTPException(status_code=400, detail="No PDF uploaded.")
 
-    return CURRENT_STRUCTURED_JSON
+    return sj
 
 
 # Serve static web interface
