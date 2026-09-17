@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent PDF Summarization Agent</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #0e1117;
+            --bg-sidebar: #161922;
+            --bg-card: #1a1f2c;
+            --bg-input: #12151e;
+            --border-color: #262c3d;
+            --border-focus: #3b4252;
+            --text-main: #f0f2f6;
+            --text-muted: #8b949e;
+            --primary-red: #ff4b4b;
+            --primary-red-hover: #ff3333;
+            --primary-blue: #1a73e8;
+            --accent-green: #00d26a;
+            --shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            width: 320px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 20px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 24px;
+        }
+
+        .sidebar-header i {
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .form-label i {
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .password-toggle:hover {
+            color: var(--text-main);
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            cursor: pointer;
+        }
+
+        .range-slider {
+            width: 100%;
+            accent-color: var(--primary-red);
+            cursor: pointer;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 16px 0 20px 0;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 16px;
+        }
+
+        /* --- MAIN CONTENT --- */
+        #main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            font-size: 2rem;
+            color: #fff;
+        }
+
+        .app-title {
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .app-subtitle {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        /* UPLOAD ZONE */
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .upload-label {
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .dropzone {
+            background-color: var(--bg-card);
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--primary-red);
+            background-color: #212638;
+        }
+
+        .dropzone-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-align: left;
+        }
+
+        .dropzone-icon {
+            font-size: 2rem;
+            color: var(--text-muted);
+        }
+
+        .dropzone-text h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .dropzone-text p {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .btn-browse {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-browse:hover {
+            border-color: var(--text-muted);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* UPLOADED FILE BADGE */
+        .file-badge {
+            display: none;
+            background-color: #1a2030;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-badge-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+        }
+
+        .file-badge-left i {
+            color: var(--primary-red);
+        }
+
+        .file-badge-size {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+
+        .file-remove {
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .file-remove:hover {
+            color: var(--primary-red);
+        }
+
+        /* METRICS ROW */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 6px;
+        }
+
+        .metric-card {
+            background-color: transparent;
+            padding: 10px 0;
+        }
+
+        .metric-title {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .inferred-title-row {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            margin-top: -6px;
+        }
+
+        .inferred-title-pill {
+            color: var(--accent-green);
+            background-color: rgba(0, 210, 106, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* TABS */
+        .tabs-container {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            gap: 24px;
+            margin-top: 10px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 10px 4px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--primary-red);
+        }
+
+        /* GENERATE BUTTON */
+        .btn-generate {
+            width: 100%;
+            background-color: var(--primary-red);
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-generate:hover {
+            background-color: var(--primary-red-hover);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* TAB PANELS */
+        .tab-panel {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tab-panel.active {
+            display: flex;
+        }
+
+        /* SUMMARY OUTPUT AREA */
+        .summary-wrapper {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            line-height: 1.65;
+            position: relative;
+        }
+
+        .summary-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .btn-action {
+            background-color: #212636;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background-color: #2b3247;
+            border-color: var(--text-muted);
+        }
+
+        /* MARKDOWN RENDER STYLING */
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+            color: #ffffff;
+            margin-top: 1.2rem;
+            margin-bottom: 0.6rem;
+            font-weight: 700;
+        }
+        .markdown-body h1 { font-size: 1.6rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .markdown-body h2 { font-size: 1.3rem; }
+        .markdown-body h3 { font-size: 1.1rem; color: #58a6ff; }
+        .markdown-body p { margin-bottom: 1rem; color: #c9d1d9; }
+        .markdown-body ul, .markdown-body ol { margin-left: 24px; margin-bottom: 1rem; color: #c9d1d9; }
+        .markdown-body li { margin-bottom: 4px; }
+        .markdown-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            border: 1px solid var(--border-color);
+        }
+        .markdown-body th, .markdown-body td {
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .markdown-body th {
+            background-color: #1f2433;
+            color: #ffffff;
+        }
+        .markdown-body blockquote {
+            border-left: 4px solid var(--primary-blue);
+            background-color: #161b26;
+            padding: 8px 14px;
+            margin: 12px 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        /* Q&A CHAT */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: 480px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .chat-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: var(--radius-lg);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .chat-bubble.user {
+            align-self: flex-end;
+            background-color: var(--primary-red);
+            color: #ffffff;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-bubble.assistant {
+            align-self: flex-start;
+            background-color: #212638;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 0.92rem;
+            outline: none;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-red);
+        }
+
+        .btn-send {
+            background-color: var(--primary-red);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0 20px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* ACCORDIONS FOR INSPECT */
+        .accordion-item {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .accordion-header:hover {
+            background-color: #212638;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 14px 16px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            background-color: #12151e;
+        }
+
+        .accordion-content.open {
+            display: block;
+        }
+
+        /* SPINNER OVERLAY */
+        .spinner-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(14, 17, 23, 0.85);
+            border-radius: var(--radius-lg);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .spinner {
+            width: 38px;
+            height: 38px;
+            border: 4px solid rgba(255, 75, 75, 0.2);
+            border-top-color: var(--primary-red);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ALERT TOAST */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: #212638;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-subtle);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LEFT SIDEBAR -->
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-gear"></i>
+            <span>Agent Settings</span>
+        </div>
+
+        <div class="form-group">
+            <div style="display: flex; align-items: center; gap: 8px; background: rgba(0, 210, 106, 0.1); border: 1px solid rgba(0, 210, 106, 0.3); padding: 9px 12px; border-radius: var(--radius-md); font-size: 0.83rem; color: var(--accent-green);">
+                <i class="fa-solid fa-circle-check"></i>
+                <span style="font-weight: 600;">Google Gemini API Connected</span>
+            </div>
+            <input type="hidden" id="apiKeyInput" value="">
+        </div>
+
+        <div class="form-group">
+            <div class="form-label">
+                <span>Gemini Model</span>
+            </div>
+            <select id="modelSelect" class="form-control">
+                <option value="gemini-2.5-flash" selected>gemini-2.5-flash</option>
+                <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <div class="form-label">
+                <span>Temperature (Precision vs Creativity)</span>
+                <span id="tempValue" style="color: var(--primary-red); font-weight: 700;">0.20</span>
+            </div>
+            <input type="range" id="tempSlider" class="range-slider" min="0" max="1" step="0.05" value="0.20">
+            <div class="slider-labels">
+                <span>0.00</span>
+                <span>1.00</span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title">Summary Configuration</div>
+
+        <div class="form-group">
+            <div class="form-label">
+                <span>Summary Level</span>
+            </div>
+            <select id="summaryLevelSelect" class="form-control">
+                <option value="executive" selected>Executive (Problem, Significance, Results, Limitations)</option>
+                <option value="detailed">Detailed (Section-by-section, In-depth)</option>
+                <option value="medium">Medium (Overview, Concepts, Findings)</option>
+                <option value="short">Short (Purpose, 5-10 Points, Conclusion)</option>
+                <option value="default">Default Structured</option>
+                <option value="custom">Custom Instructions</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="customPromptGroup" style="display: none;">
+            <div class="form-label">
+                <span>Custom Prompt Instructions</span>
+            </div>
+            <textarea id="customPromptInput" class="form-control" rows="4" placeholder="E.g., Generate bullet-point revision notes for a computer science exam..."></textarea>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content">
+        <!-- HEADER -->
+        <div>
+            <div class="header-title-row">
+                <i class="fa-regular fa-file-lines header-icon"></i>
+                <h1 class="app-title">Intelligent PDF Summarization Agent</h1>
+            </div>
+            <p class="app-subtitle">
+                Deep structural analysis, faithful extraction, zero-hallucination guarantees, and page traceability. Powered by Google Gemini.
+            </p>
+        </div>
+
+        <!-- UPLOAD SECTION -->
+        <div class="upload-section">
+            <label class="upload-label">Upload a PDF document to analyze</label>
+            <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+            
+            <div class="dropzone" id="dropzone">
+                <div class="dropzone-left">
+                    <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                    <div class="dropzone-text">
+                        <h4>Drag and drop file here</h4>
+                        <p>Limit 200MB per file • PDF</p>
+                    </div>
+                </div>
+                <button class="btn-browse" type="button" id="browseBtn">Browse files</button>
+            </div>
+
+            <div class="file-badge" id="fileBadge">
+                <div class="file-badge-left">
+                    <i class="fa-regular fa-file-pdf"></i>
+                    <span id="badgeFileName" style="font-weight: 500;">document.pdf</span>
+                    <span class="file-badge-size" id="badgeFileSize">12.2KB</span>
+                </div>
+                <i class="fa-solid fa-xmark file-remove" id="removeFileBtn"></i>
+            </div>
+        </div>
+
+        <!-- METRICS ROW -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Total Pages</div>
+                <div class="metric-value" id="metricPages">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Tables Detected</div>
+                <div class="metric-value" id="metricTables">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Contains Math / Equations</div>
+                <div class="metric-value" id="metricMath">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Images / Figures</div>
+                <div class="metric-value" id="metricImages">-</div>
+            </div>
+        </div>
+
+        <!-- INFERRED TITLE -->
+        <div class="inferred-title-row" id="inferredTitleRow" style="display: none;">
+            Inferred Document Title: <span class="inferred-title-pill" id="inferredTitleText">(none)</span>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs-container">
+            <button class="tab-btn active" data-tab="summaryTab">
+                <i class="fa-regular fa-clipboard"></i> Document Summary
+            </button>
+            <button class="tab-btn" data-tab="qaTab">
+                <i class="fa-regular fa-comments"></i> Interactive Q&A (Page Traceable)
+            </button>
+            <button class="tab-btn" data-tab="inspectorTab">
+                <i class="fa-solid fa-magnifying-glass"></i> Document Structure & Tables
+            </button>
+            <button class="tab-btn" data-tab="workflowTab">
+                <i class="fa-solid fa-diagram-project"></i> 10-Step Workflow Analysis
+            </button>
+        </div>
+
+        <!-- GENERATE BUTTON -->
+        <button class="btn-generate" id="generateBtn">
+            <i class="fa-solid fa-rocket"></i>
+            <span>Generate / Refresh Summary</span>
+        </button>
+
+        <!-- TAB 1: SUMMARY -->
+        <section class="tab-panel active" id="summaryTab">
+            <div class="summary-wrapper" style="position: relative; min-height: 240px;">
+                <div class="spinner-overlay" id="summarySpinner">
+                    <div class="spinner"></div>
+                    <div id="spinnerText" style="font-size: 0.9rem; color: #fff;">Analyzing document with Google Gemini...</div>
+                </div>
+
+                <div class="summary-actions" id="summaryActions" style="display: none;">
+                    <button class="btn-action" id="copySummaryBtn">
+                        <i class="fa-regular fa-copy"></i> Copy Markdown
+                    </button>
+                    <button class="btn-action" id="downloadSummaryBtn">
+                        <i class="fa-solid fa-download"></i> Download Summary as Markdown
+                    </button>
+                </div>
+
+                <div class="markdown-body" id="summaryContent">
+                    <p style="color: var(--text-muted); font-style: italic;">
+                        Upload a PDF and click "Generate / Refresh Summary" to synthesize the executive summary.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: INTERACTIVE Q&A -->
+        <section class="tab-panel" id="qaTab">
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-bubble assistant">
+                        Hello! Ask any question about this PDF. Answers will be directly grounded in the text with exact page citations.
+                    </div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question (e.g., 'What was the performance improvement?' or 'What are the stated limitations?')">
+                    <button class="btn-send" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: STRUCTURE & TABLES -->
+        <section class="tab-panel" id="inspectorTab">
+            <div id="inspectorContent">
+                <p style="color: var(--text-muted);">Upload a PDF to inspect its page-by-page heading structure and extracted tables.</p>
+            </div>
+        </section>
+
+        <!-- TAB 4: 10-STEP WORKFLOW ANALYSIS -->
+        <section class="tab-panel" id="workflowTab">
+            <div id="workflowContent" class="summary-wrapper">
+                <p style="color: var(--text-muted);">Upload a PDF to run the transparent 10-step cognitive workflow analysis.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i>
+        <span id="toastMsg">Action completed</span>
+    </div>
+
+    <script>
+        // DOM Elements
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const toggleKeyVisibility = document.getElementById('toggleKeyVisibility');
+        const modelSelect = document.getElementById('modelSelect');
+        const tempSlider = document.getElementById('tempSlider');
+        const tempValue = document.getElementById('tempValue');
+        const summaryLevelSelect = document.getElementById('summaryLevelSelect');
+        const customPromptGroup = document.getElementById('customPromptGroup');
+        const customPromptInput = document.getElementById('customPromptInput');
+
+        const fileInput = document.getElementById('fileInput');
+        const dropzone = document.getElementById('dropzone');
+        const browseBtn = document.getElementById('browseBtn');
+        const fileBadge = document.getElementById('fileBadge');
+        const badgeFileName = document.getElementById('badgeFileName');
+        const badgeFileSize = document.getElementById('badgeFileSize');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+
+        const metricPages = document.getElementById('metricPages');
+        const metricTables = document.getElementById('metricTables');
+        const metricMath = document.getElementById('metricMath');
+        const metricImages = document.getElementById('metricImages');
+        const inferredTitleRow = document.getElementById('inferredTitleRow');
+        const inferredTitleText = document.getElementById('inferredTitleText');
+
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+        const generateBtn = document.getElementById('generateBtn');
+
+        const summaryContent = document.getElementById('summaryContent');
+        const summarySpinner = document.getElementById('summarySpinner');
+        const spinnerText = document.getElementById('spinnerText');
+        const summaryActions = document.getElementById('summaryActions');
+        const copySummaryBtn = document.getElementById('copySummaryBtn');
+        const downloadSummaryBtn = document.getElementById('downloadSummaryBtn');
+
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const inspectorContent = document.getElementById('inspectorContent');
+        const workflowContent = document.getElementById('workflowContent');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+
+        let currentFile = null;
+        let lastRawSummary = '';
+
+        // Auto-load pre-integrated config from server
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/config');
+                const data = await res.json();
+                if (data.api_key) {
+                    apiKeyInput.value = data.api_key;
+                    showToast('Google Gemini API Key connected!');
+                }
+                if (data.default_model) {
+                    modelSelect.value = data.default_model;
+                }
+            } catch (err) {
+                console.log('Config error:', err);
+            }
+        });
+
+        // Password eye toggle
+        if (toggleKeyVisibility) {
+            toggleKeyVisibility.addEventListener('click', () => {
+                const isPassword = apiKeyInput.type === 'password';
+                apiKeyInput.type = isPassword ? 'text' : 'password';
+                toggleKeyVisibility.className = isPassword ? 'fa-solid fa-eye-slash password-toggle' : 'fa-solid fa-eye password-toggle';
+            });
+        }
+
+        // Temperature slider change
+        tempSlider.addEventListener('input', (e) => {
+            tempValue.textContent = parseFloat(e.target.value).toFixed(2);
+        });
+
+        // Custom prompt show/hide
+        summaryLevelSelect.addEventListener('change', (e) => {
+            customPromptGroup.style.display = e.target.value === 'custom' ? 'block' : 'none';
+        });
+
+        // Toast Helper
+        function showToast(msg, isError = false) {
+            toastMsg.textContent = msg;
+            toast.style.borderColor = isError ? 'var(--primary-red)' : 'var(--border-color)';
+            toast.style.display = 'flex';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        // Tab Switching
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabPanels.forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                const targetPanel = document.getElementById(btn.dataset.tab);
+                if (targetPanel) targetPanel.classList.add('active');
+
+                if (btn.dataset.tab === 'inspectorTab' && currentFile) {
+                    loadInspectionData();
+                } else if (btn.dataset.tab === 'workflowTab' && currentFile) {
+                    loadWorkflowData();
+                }
+            });
+        });
+
+        // Drag and Drop
+        browseBtn.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover'].forEach(name => {
+            dropzone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+            dropzone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dragover');
+            });
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFileUpload(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        removeFileBtn.addEventListener('click', () => {
+            currentFile = null;
+            fileInput.value = '';
+            fileBadge.style.display = 'none';
+            dropzone.style.display = 'flex';
+            metricPages.textContent = '-';
+            metricTables.textContent = '-';
+            metricMath.textContent = '-';
+            metricImages.textContent = '-';
+            inferredTitleRow.style.display = 'none';
+            summaryContent.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">Upload a PDF to begin.</p>';
+            summaryActions.style.display = 'none';
+        });
+
+        async function handleFileUpload(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showToast('Please select a valid PDF document.', true);
+                return;
+            }
+
+            currentFile = file;
+            badgeFileName.textContent = file.name;
+            badgeFileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+            dropzone.style.display = 'none';
+            fileBadge.style.display = 'flex';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                showToast('Uploading & parsing PDF structure...');
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+                metricPages.textContent = data.total_pages;
+                metricTables.textContent = data.tables_detected;
+                metricMath.textContent = data.contains_math ? 'Yes' : 'No';
+                metricImages.textContent = data.images_count;
+
+                inferredTitleRow.style.display = 'block';
+                inferredTitleText.textContent = data.title || file.name;
+
+                showToast('PDF extracted successfully!');
+            } catch (err) {
+                showToast(err.message, true);
+            }
+        }
+
+        // Generate Summary
+        generateBtn.addEventListener('click', async () => {
+            if (!currentFile) {
+                showToast('Please upload a PDF document first.', true);
+                return;
+            }
+
+            summarySpinner.style.display = 'flex';
+            spinnerText.textContent = 'Analyzing document hierarchy & synthesizing summary...';
+            generateBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        api_key: apiKeyInput.value.trim() || undefined,
+                        model: modelSelect.value,
+                        temperature: parseFloat(tempSlider.value),
+                        level: summaryLevelSelect.value,
+                        custom_prompt: customPromptInput.value.trim() || undefined
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Summarization failed');
+
+                lastRawSummary = data.summary;
+                summaryContent.innerHTML = marked.parse(data.summary);
+                summaryActions.style.display = 'flex';
+                showToast('Summary generated!');
+            } catch (err) {
+                showToast(err.message, true);
+                summaryContent.innerHTML = `<div style="color: var(--primary-red); padding: 12px; background: rgba(255,75,75,0.1); border-radius: 8px;"><b>Error:</b> ${err.message}</div>`;
+            } finally {
+                summarySpinner.style.display = 'none';
+                generateBtn.disabled = false;
+            }
+        });
+
+        // Copy & Download
+        copySummaryBtn.addEventListener('click', () => {
+            if (lastRawSummary) {
+                navigator.clipboard.writeText(lastRawSummary);
+                showToast('Summary copied to clipboard!');
+            }
+        });
+
+        downloadSummaryBtn.addEventListener('click', () => {
+            if (lastRawSummary) {
+                const blob = new Blob([lastRawSummary], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentFile.name}_summary.md`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // Q&A Chat
+        async function sendQuery() {
+            const query = chatInput.value.trim();
+            if (!query) return;
+            if (!currentFile) {
+                showToast('Upload a PDF first to ask questions.', true);
+                return;
+            }
+
+            // Append user bubble
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-bubble user';
+            userBubble.textContent = query;
+            chatMessages.appendChild(userBubble);
+            chatInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Loading bubble
+            const assistBubble = document.createElement('div');
+            assistBubble.className = 'chat-bubble assistant';
+            assistBubble.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching document pages & formulating answer...';
+            chatMessages.appendChild(assistBubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const res = await fetch('/api/qa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        api_key: apiKeyInput.value.trim() || undefined,
+                        model: modelSelect.value,
+                        temperature: parseFloat(tempSlider.value)
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Q&A failed');
+
+                assistBubble.innerHTML = marked.parse(data.answer);
+            } catch (err) {
+                assistBubble.innerHTML = `<span style="color: var(--primary-red);">Error: ${err.message}</span>`;
+            }
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        sendBtn.addEventListener('click', sendQuery);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendQuery();
+        });
+
+        // Inspector
+        async function loadInspectionData() {
+            try {
+                const res = await fetch('/api/inspect');
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail);
+
+                let html = `<h3 style="margin-bottom: 12px; color: #fff;">Document Structure: ${data.filename}</h3>`;
+                data.pages.forEach(p => {
+                    const headingTexts = p.headings.map(h => `<code style="color: #58a6ff;">${h.text}</code>`).join(', ') || '(No major headings)';
+                    html += `
+                        <div class="accordion-item">
+                            <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                                <span><i class="fa-regular fa-file"></i> Page ${p.page_number} (${p.headings.length} Headings, ${p.tables.length} Tables)</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-content">
+                                <p><b>Headings:</b> ${headingTexts}</p>
+                                ${p.tables.length > 0 ? '<div style="margin-top: 8px;"><b>Tables:</b>' + p.tables.map(t => marked.parse(t.markdown)).join('') + '</div>' : ''}
+                                <p style="margin-top: 8px;"><b>Text Preview:</b></p>
+                                <pre style="background: #1e2330; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 0.78rem;">${p.raw_text_preview}...</pre>
+                            </div>
+                        </div>
+                    `;
+                });
+                inspectorContent.innerHTML = html;
+            } catch (err) {
+                inspectorContent.innerHTML = `<p style="color: var(--primary-red);">Error loading structure: ${err.message}</p>`;
+            }
+        }
+
+        // 10-Step Workflow Data
+        async function loadWorkflowData() {
+            try {
+                workflowContent.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Executing 10-step analytical workflow...</div>';
+                const key = apiKeyInput.value.trim();
+                const model = modelSelect.value;
+                const url = `/api/analysis-steps?${key ? 'api_key=' + encodeURIComponent(key) + '&' : ''}model=${encodeURIComponent(model)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail);
+
+                workflowContent.innerHTML = `
+                    <h2 style="color: var(--primary-blue); margin-bottom: 12px;">Internal 10-Step Cognitive Analysis</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 20px;">The document was processed through the following 10 verification steps prior to final synthesis:</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h3>Step 1: Document Understanding</h3>
+                            <p><b>Type:</b> ${data.doc_type} | <b>Complexity:</b> ${data.complexity}<br><b>Topic:</b> ${data.main_topic}<br><b>Audience:</b> ${data.intended_audience}</p>
+                            
+                            <h3>Step 4: Central Message</h3>
+                            <blockquote>${data.central_message}</blockquote>
+
+                            <h3>Step 2 & 3: Extracted Key Points</h3>
+                            <ul>${data.key_points.map(kp => '<li>' + kp + '</li>').join('')}</ul>
+                        </div>
+                        <div>
+                            <h3>Step 5: Major Sections</h3>
+                            <ul>${data.major_sections.map(s => '<li>' + s + '</li>').join('')}</ul>
+
+                            <h3>Step 9: Key Findings & Claims</h3>
+                            <ul>${data.key_findings.map(f => '<li>' + f + '</li>').join('')}</ul>
+
+                            <h3>Step 10: Explicit Limitations</h3>
+                            <ul>${data.limitations.map(l => '<li>' + l + '</li>').join('')}</ul>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                workflowContent.innerHTML = `<p style="color: var(--primary-red);">Error loading workflow: ${err.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
