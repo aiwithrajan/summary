@@ -41,3 +41,8 @@ Thumbs.db
 uploads/
 /tmp/
 *.log
+
+# Node & Vercel
+node_modules/
+.vercel/
+.vercel
