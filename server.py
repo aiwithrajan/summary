@@ -1,7 +1,8 @@
-"""FastAPI Web Server for the PDF Summarization Agent with Custom Modern Dark UI."""
+"""FastAPI Web Server for the PDF Summarization Agent powered by the 4-Tool Deterministic Pipeline."""
 import os
 import shutil
 import tempfile
+import json
 from typing import Optional, List, Dict, Any
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -15,6 +16,8 @@ from agent.analyzer import DocumentAnalyzer
 from agent.summarizer import PDFSummarizer, SummaryLevel
 from agent.qa import PDFQuestionAnswerer
 from agent.llm import GeminiLLMClient, get_available_gemini_models
+from agent.tool_orchestrator import ToolDrivenOrchestrator
+from tools import PDFToStructuredJSONTool, NoiseCleanerTool, TableAnalyticsTool, FactAndCitationCheckerTool
 
 app = FastAPI(title="PDF Summarization Agent")
 
@@ -28,6 +31,10 @@ app.add_middleware(
 
 # In-memory document session cache
 CURRENT_DOC: Optional[ExtractedDocument] = None
+CURRENT_PDF_PATH: Optional[str] = None
+CURRENT_STRUCTURED_JSON: Optional[Dict[str, Any]] = None
+CURRENT_ORCHESTRATOR_RESULT: Optional[Dict[str, Any]] = None
+
 UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "pdf_uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -66,7 +73,7 @@ async def list_models(api_key: Optional[str] = None):
 
 @app.post("/api/upload")
 async def upload_pdf(file: UploadFile = File(...)):
-    global CURRENT_DOC
+    global CURRENT_DOC, CURRENT_PDF_PATH, CURRENT_STRUCTURED_JSON
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
@@ -75,23 +82,35 @@ async def upload_pdf(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     try:
+        CURRENT_PDF_PATH = file_path
         extractor = PDFExtractor(file_path)
         doc = extractor.extract()
         doc.filename = file.filename
         CURRENT_DOC = doc
 
-        total_tables = sum(len(p.tables) for p in doc.pages)
-        total_equations = sum(len(p.equations) for p in doc.pages)
-        total_images = sum(p.images_count for p in doc.pages)
+        # Execute Tool 1 (Structured JSON), Tool 2 (Noise Cleaner), Tool 3 (Table Analytics)
+        t1 = PDFToStructuredJSONTool()
+        t2 = NoiseCleanerTool()
+        t3 = TableAnalyticsTool()
+
+        raw_json = t1.execute(file_path)
+        cleaned_json = t2.execute(raw_json)
+        analyzed_json = t3.execute(cleaned_json)
+        CURRENT_STRUCTURED_JSON = analyzed_json
+
+        meta = analyzed_json["document_metadata"]
 
         return {
             "filename": doc.filename,
-            "title": doc.inferred_title,
-            "total_pages": doc.total_pages,
-            "tables_detected": total_tables,
-            "contains_math": total_equations > 0 or any(p.has_equations for p in doc.pages),
-            "images_count": total_images,
-            "metadata": doc.metadata
+            "title": meta.get("inferred_title") or doc.inferred_title,
+            "total_pages": meta.get("total_pages", doc.total_pages),
+            "tables_detected": meta.get("total_tables", 0),
+            "contains_math": meta.get("total_equations", 0) > 0,
+            "equations_count": meta.get("total_equations", 0),
+            "images_count": sum(p.images_count for p in doc.pages),
+            "metadata": doc.metadata,
+            "table_analytics": analyzed_json.get("table_analytics", {}),
+            "sections_count": len(analyzed_json.get("section_hierarchy", []))
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
@@ -99,32 +118,48 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 @app.post("/api/summarize")
 async def summarize_pdf(req: SummarizeRequest):
-    global CURRENT_DOC
-    if not CURRENT_DOC:
+    global CURRENT_PDF_PATH, CURRENT_STRUCTURED_JSON, CURRENT_ORCHESTRATOR_RESULT
+    if not CURRENT_PDF_PATH or not os.path.exists(CURRENT_PDF_PATH):
         raise HTTPException(status_code=400, detail="No PDF has been uploaded yet.")
 
     try:
+        api_key = req.api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         llm = GeminiLLMClient(
-            api_key=req.api_key,
+            api_key=api_key,
             model_name=req.model,
             temperature=req.temperature
         )
-        summarizer = PDFSummarizer(llm)
-        level_enum = SummaryLevel(req.level.lower())
-        
-        summary_markdown = summarizer.summarize(
-            CURRENT_DOC,
-            level=level_enum,
+
+        # Run 4-tool pipeline orchestrator
+        orchestrator = ToolDrivenOrchestrator(llm)
+        res = orchestrator.process_pdf(
+            CURRENT_PDF_PATH,
+            level=req.level,
             custom_instructions=req.custom_prompt
         )
 
+        CURRENT_ORCHESTRATOR_RESULT = res
+        CURRENT_STRUCTURED_JSON = res["structured_json"]
+
         return {
-            "summary": summary_markdown,
+            "summary": res["summary"],
+            "raw_summary": res["raw_summary"],
             "level": req.level,
-            "title": CURRENT_DOC.inferred_title
+            "title": res["title"],
+            "tool_traces": res["tool_traces"],
+            "table_analytics": res["table_analytics"],
+            "verification": res["verification"]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Summarization error: {str(e)}")
+
+
+@app.get("/api/structured-json")
+async def get_structured_json():
+    global CURRENT_STRUCTURED_JSON
+    if not CURRENT_STRUCTURED_JSON:
+        raise HTTPException(status_code=400, detail="No structured JSON available yet. Please upload a PDF.")
+    return CURRENT_STRUCTURED_JSON
 
 
 @app.post("/api/qa")
@@ -134,8 +169,9 @@ async def answer_question(req: QARequest):
         raise HTTPException(status_code=400, detail="No PDF uploaded.")
 
     try:
+        api_key = req.api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         llm = GeminiLLMClient(
-            api_key=req.api_key,
+            api_key=api_key,
             model_name=req.model,
             temperature=req.temperature
         )
@@ -148,53 +184,11 @@ async def answer_question(req: QARequest):
 
 @app.get("/api/inspect")
 async def inspect_document():
-    global CURRENT_DOC
-    if not CURRENT_DOC:
+    global CURRENT_STRUCTURED_JSON, CURRENT_DOC
+    if not CURRENT_STRUCTURED_JSON:
         raise HTTPException(status_code=400, detail="No PDF uploaded.")
 
-    pages_data = []
-    for p in CURRENT_DOC.pages:
-        tables_data = [{"markdown": t.markdown, "page": t.page_num} for t in p.tables]
-        pages_data.append({
-            "page_number": p.page_number,
-            "headings": p.headings,
-            "tables": tables_data,
-            "has_equations": p.has_equations,
-            "raw_text_preview": p.raw_text[:1200]
-        })
-
-    return {
-        "filename": CURRENT_DOC.filename,
-        "title": CURRENT_DOC.inferred_title,
-        "total_pages": CURRENT_DOC.total_pages,
-        "pages": pages_data
-    }
-
-
-@app.get("/api/analysis-steps")
-async def get_analysis_steps(api_key: Optional[str] = None, model: str = "gemini-1.5-flash"):
-    global CURRENT_DOC
-    if not CURRENT_DOC:
-        raise HTTPException(status_code=400, detail="No PDF uploaded.")
-
-    llm = GeminiLLMClient(api_key=api_key, model_name=model)
-    analyzer = DocumentAnalyzer(llm)
-    analysis = analyzer.analyze(CURRENT_DOC)
-
-    return {
-        "title": analysis.title,
-        "doc_type": analysis.doc_type,
-        "main_topic": analysis.main_topic,
-        "purpose": analysis.purpose,
-        "intended_audience": analysis.intended_audience,
-        "complexity": analysis.complexity,
-        "central_message": analysis.central_message,
-        "key_points": analysis.key_points,
-        "major_sections": analysis.major_sections,
-        "key_findings": analysis.key_findings,
-        "limitations": analysis.limitations,
-        "uncertainties": analysis.uncertainties
-    }
+    return CURRENT_STRUCTURED_JSON
 
 
 # Serve static web interface
@@ -214,4 +208,4 @@ async def serve_index():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("server:app", host="0.0.0.0", port=8080, reload=True)

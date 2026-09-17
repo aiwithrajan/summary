@@ -87,18 +87,6 @@
             margin-bottom: 8px;
         }
 
-        .form-label i {
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
         .form-control {
             width: 100%;
             background-color: var(--bg-input);
@@ -113,18 +101,6 @@
 
         .form-control:focus {
             border-color: var(--primary-blue);
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 12px;
-            cursor: pointer;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .password-toggle:hover {
-            color: var(--text-main);
         }
 
         select.form-control {
@@ -214,11 +190,10 @@
             background-color: var(--bg-card);
             border: 2px dashed var(--border-color);
             border-radius: var(--radius-lg);
-            padding: 30px 20px;
+            padding: 26px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
-            position: relative;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -306,33 +281,91 @@
             color: var(--primary-red);
         }
 
+        /* 4-TOOL PIPELINE BADGE BAR */
+        .pipeline-box {
+            display: none;
+            background-color: #131722;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            margin-top: 4px;
+        }
+
+        .pipeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .pipeline-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .tool-card {
+            background-color: #1a1f2c;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .tool-card.active {
+            border-color: var(--accent-green);
+            background-color: rgba(0, 210, 106, 0.08);
+        }
+
+        .tool-card-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .tool-card-desc {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
         /* METRICS ROW */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 16px;
-            margin-top: 6px;
+            margin-top: 2px;
         }
 
         .metric-card {
             background-color: transparent;
-            padding: 10px 0;
+            padding: 6px 0;
         }
 
         .metric-title {
             font-size: 0.82rem;
             color: var(--text-muted);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .metric-value {
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             font-weight: 700;
             color: var(--text-main);
         }
 
         .inferred-title-row {
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             color: var(--text-main);
             margin-top: -6px;
         }
@@ -350,15 +383,16 @@
         .tabs-container {
             display: flex;
             border-bottom: 1px solid var(--border-color);
-            gap: 24px;
+            gap: 20px;
             margin-top: 10px;
+            flex-wrap: wrap;
         }
 
         .tab-btn {
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 600;
             padding: 10px 4px;
             cursor: pointer;
@@ -729,7 +763,7 @@
                 <h1 class="app-title">Intelligent PDF Summarization Agent</h1>
             </div>
             <p class="app-subtitle">
-                Deep structural analysis, faithful extraction, zero-hallucination guarantees, and page traceability. Powered by Google Gemini.
+                Powered by a 4-Tool Deterministic Pipeline: JSON Formatting, Noise Sanitization, Table Analytics, and Grounding Verification.
             </p>
         </div>
 
@@ -756,6 +790,32 @@
                     <span class="file-badge-size" id="badgeFileSize">12.2KB</span>
                 </div>
                 <i class="fa-solid fa-xmark file-remove" id="removeFileBtn"></i>
+            </div>
+
+            <!-- 4-TOOL EXECUTION PIPELINE BAR -->
+            <div class="pipeline-box" id="pipelineBox">
+                <div class="pipeline-header">
+                    <span>4-Tool Deterministic Pipeline Status</span>
+                    <span id="pipelineStatusText" style="color: var(--accent-green);">Ready</span>
+                </div>
+                <div class="pipeline-grid">
+                    <div class="tool-card active" id="cardTool1">
+                        <div class="tool-card-title"><i class="fa-solid fa-file-code" style="color: #58a6ff;"></i> Tool 1: JSON Formatter</div>
+                        <div class="tool-card-desc">Extracted document hierarchy, pages & tables into JSON</div>
+                    </div>
+                    <div class="tool-card active" id="cardTool2">
+                        <div class="tool-card-title"><i class="fa-solid fa-broom" style="color: #f0883e;"></i> Tool 2: Noise Sanitizer</div>
+                        <div class="tool-card-desc">Cleaned headers, footers & ligatures</div>
+                    </div>
+                    <div class="tool-card active" id="cardTool3">
+                        <div class="tool-card-title"><i class="fa-solid fa-calculator" style="color: #a371f7;"></i> Tool 3: Table Analytics</div>
+                        <div class="tool-card-desc">Computed mathematical deltas & comparisons</div>
+                    </div>
+                    <div class="tool-card" id="cardTool4">
+                        <div class="tool-card-title"><i class="fa-solid fa-shield-halved" style="color: var(--accent-green);"></i> Tool 4: Fact Checker</div>
+                        <div class="tool-card-desc" id="cardTool4Desc">Ready to verify summary citations</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -789,21 +849,27 @@
             <button class="tab-btn active" data-tab="summaryTab">
                 <i class="fa-regular fa-clipboard"></i> Document Summary
             </button>
+            <button class="tab-btn" data-tab="jsonTab">
+                <i class="fa-solid fa-code"></i> Structured JSON (Ground Truth)
+            </button>
+            <button class="tab-btn" data-tab="analyticsTab">
+                <i class="fa-solid fa-chart-simple"></i> Table Analytics
+            </button>
             <button class="tab-btn" data-tab="qaTab">
                 <i class="fa-regular fa-comments"></i> Interactive Q&A (Page Traceable)
             </button>
             <button class="tab-btn" data-tab="inspectorTab">
-                <i class="fa-solid fa-magnifying-glass"></i> Document Structure & Tables
+                <i class="fa-solid fa-magnifying-glass"></i> Structure & Tables
             </button>
             <button class="tab-btn" data-tab="workflowTab">
-                <i class="fa-solid fa-diagram-project"></i> 10-Step Workflow Analysis
+                <i class="fa-solid fa-diagram-project"></i> 10-Step Workflow
             </button>
         </div>
 
         <!-- GENERATE BUTTON -->
         <button class="btn-generate" id="generateBtn">
             <i class="fa-solid fa-rocket"></i>
-            <span>Generate / Refresh Summary</span>
+            <span>Generate / Refresh Summary via 4-Tool Pipeline</span>
         </button>
 
         <!-- TAB 1: SUMMARY -->
@@ -811,7 +877,7 @@
             <div class="summary-wrapper" style="position: relative; min-height: 240px;">
                 <div class="spinner-overlay" id="summarySpinner">
                     <div class="spinner"></div>
-                    <div id="spinnerText" style="font-size: 0.9rem; color: #fff;">Analyzing document with Google Gemini...</div>
+                    <div id="spinnerText" style="font-size: 0.9rem; color: #fff;">Running 4-tool pipeline...</div>
                 </div>
 
                 <div class="summary-actions" id="summaryActions" style="display: none;">
@@ -819,19 +885,48 @@
                         <i class="fa-regular fa-copy"></i> Copy Markdown
                     </button>
                     <button class="btn-action" id="downloadSummaryBtn">
-                        <i class="fa-solid fa-download"></i> Download Summary as Markdown
+                        <i class="fa-solid fa-download"></i> Download Summary
                     </button>
                 </div>
 
                 <div class="markdown-body" id="summaryContent">
                     <p style="color: var(--text-muted); font-style: italic;">
-                        Upload a PDF and click "Generate / Refresh Summary" to synthesize the executive summary.
+                        Upload a PDF and click "Generate / Refresh Summary" to synthesize the executive summary through the 4 deterministic tools.
                     </p>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 2: INTERACTIVE Q&A -->
+        <!-- TAB 2: STRUCTURED JSON -->
+        <section class="tab-panel" id="jsonTab">
+            <div class="summary-wrapper">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="color: #fff;">Pre-processed Structured JSON (Tool 1, 2, 3 Output)</h3>
+                    <button class="btn-action" id="downloadJsonBtn">
+                        <i class="fa-solid fa-download"></i> Download document_structured.json
+                    </button>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
+                    This standard JSON schema contains the ground-truth text, headings, equations, and tables formatted deterministically by the tools.
+                </p>
+                <pre id="jsonViewer" style="background: #12151e; padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); overflow-x: auto; max-height: 520px; font-family: 'Fira Code', monospace; font-size: 0.82rem; color: #58a6ff;"></pre>
+            </div>
+        </section>
+
+        <!-- TAB 3: TABLE ANALYTICS -->
+        <section class="tab-panel" id="analyticsTab">
+            <div class="summary-wrapper">
+                <h3 style="color: #fff; margin-bottom: 10px;">Deterministic Table Analytics (Tool 3)</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+                    Mathematical percentage differences, min/max, and baseline improvements computed purely by code (no LLM calculations).
+                </p>
+                <div id="analyticsContent">
+                    <p style="color: var(--text-muted); font-style: italic;">Upload a PDF to view table mathematical analytics.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: INTERACTIVE Q&A -->
         <section class="tab-panel" id="qaTab">
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages">
@@ -846,14 +941,14 @@
             </div>
         </section>
 
-        <!-- TAB 3: STRUCTURE & TABLES -->
+        <!-- TAB 5: STRUCTURE & TABLES -->
         <section class="tab-panel" id="inspectorTab">
             <div id="inspectorContent">
                 <p style="color: var(--text-muted);">Upload a PDF to inspect its page-by-page heading structure and extracted tables.</p>
             </div>
         </section>
 
-        <!-- TAB 4: 10-STEP WORKFLOW ANALYSIS -->
+        <!-- TAB 6: 10-STEP WORKFLOW ANALYSIS -->
         <section class="tab-panel" id="workflowTab">
             <div id="workflowContent" class="summary-wrapper">
                 <p style="color: var(--text-muted);">Upload a PDF to run the transparent 10-step cognitive workflow analysis.</p>
@@ -870,7 +965,6 @@
     <script>
         // DOM Elements
         const apiKeyInput = document.getElementById('apiKeyInput');
-        const toggleKeyVisibility = document.getElementById('toggleKeyVisibility');
         const modelSelect = document.getElementById('modelSelect');
         const tempSlider = document.getElementById('tempSlider');
         const tempValue = document.getElementById('tempValue');
@@ -885,6 +979,11 @@
         const badgeFileName = document.getElementById('badgeFileName');
         const badgeFileSize = document.getElementById('badgeFileSize');
         const removeFileBtn = document.getElementById('removeFileBtn');
+
+        const pipelineBox = document.getElementById('pipelineBox');
+        const pipelineStatusText = document.getElementById('pipelineStatusText');
+        const cardTool4 = document.getElementById('cardTool4');
+        const cardTool4Desc = document.getElementById('cardTool4Desc');
 
         const metricPages = document.getElementById('metricPages');
         const metricTables = document.getElementById('metricTables');
@@ -904,6 +1003,10 @@
         const copySummaryBtn = document.getElementById('copySummaryBtn');
         const downloadSummaryBtn = document.getElementById('downloadSummaryBtn');
 
+        const jsonViewer = document.getElementById('jsonViewer');
+        const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+        const analyticsContent = document.getElementById('analyticsContent');
+
         const chatMessages = document.getElementById('chatMessages');
         const chatInput = document.getElementById('chatInput');
         const sendBtn = document.getElementById('sendBtn');
@@ -914,6 +1017,7 @@
 
         let currentFile = null;
         let lastRawSummary = '';
+        let currentStructuredJson = null;
 
         // Auto-load pre-integrated config from server
         window.addEventListener('DOMContentLoaded', async () => {
@@ -922,7 +1026,6 @@
                 const data = await res.json();
                 if (data.api_key) {
                     apiKeyInput.value = data.api_key;
-                    showToast('Google Gemini API Key connected!');
                 }
                 if (data.default_model) {
                     modelSelect.value = data.default_model;
@@ -931,15 +1034,6 @@
                 console.log('Config error:', err);
             }
         });
-
-        // Password eye toggle
-        if (toggleKeyVisibility) {
-            toggleKeyVisibility.addEventListener('click', () => {
-                const isPassword = apiKeyInput.type === 'password';
-                apiKeyInput.type = isPassword ? 'text' : 'password';
-                toggleKeyVisibility.className = isPassword ? 'fa-solid fa-eye-slash password-toggle' : 'fa-solid fa-eye password-toggle';
-            });
-        }
 
         // Temperature slider change
         tempSlider.addEventListener('input', (e) => {
@@ -968,7 +1062,11 @@
                 const targetPanel = document.getElementById(btn.dataset.tab);
                 if (targetPanel) targetPanel.classList.add('active');
 
-                if (btn.dataset.tab === 'inspectorTab' && currentFile) {
+                if (btn.dataset.tab === 'jsonTab' && currentStructuredJson) {
+                    renderJsonView();
+                } else if (btn.dataset.tab === 'analyticsTab' && currentStructuredJson) {
+                    renderAnalyticsView();
+                } else if (btn.dataset.tab === 'inspectorTab' && currentFile) {
                     loadInspectionData();
                 } else if (btn.dataset.tab === 'workflowTab' && currentFile) {
                     loadWorkflowData();
@@ -1010,8 +1108,10 @@
 
         removeFileBtn.addEventListener('click', () => {
             currentFile = null;
+            currentStructuredJson = null;
             fileInput.value = '';
             fileBadge.style.display = 'none';
+            pipelineBox.style.display = 'none';
             dropzone.style.display = 'flex';
             metricPages.textContent = '-';
             metricTables.textContent = '-';
@@ -1038,7 +1138,7 @@
             formData.append('file', file);
 
             try {
-                showToast('Uploading & parsing PDF structure...');
+                showToast('Executing Tool 1 (JSON Formatter) & Tool 2 (Sanitizer)...');
                 const res = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData
@@ -1054,13 +1154,49 @@
                 inferredTitleRow.style.display = 'block';
                 inferredTitleText.textContent = data.title || file.name;
 
-                showToast('PDF extracted successfully!');
+                pipelineBox.style.display = 'block';
+                pipelineStatusText.textContent = 'Tools 1, 2, 3 Executed';
+
+                // Fetch the structured JSON created by tools
+                const jsonRes = await fetch('/api/structured-json');
+                currentStructuredJson = await jsonRes.json();
+                renderJsonView();
+                renderAnalyticsView();
+
+                showToast('Tools 1, 2, 3 executed successfully!');
             } catch (err) {
                 showToast(err.message, true);
             }
         }
 
-        // Generate Summary
+        function renderJsonView() {
+            if (currentStructuredJson) {
+                jsonViewer.textContent = JSON.stringify(currentStructuredJson, null, 2);
+            }
+        }
+
+        function renderAnalyticsView() {
+            if (!currentStructuredJson || !currentStructuredJson.table_analytics) return;
+            const ta = currentStructuredJson.table_analytics;
+            if (!ta.analyses || ta.analyses.length === 0) {
+                analyticsContent.innerHTML = '<p style="color: var(--text-muted);">No comparison tables detected in this document.</p>';
+                return;
+            }
+
+            let html = '';
+            ta.analyses.forEach(t => {
+                html += `<div style="background: #12151e; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 14px;">`;
+                html += `<h4 style="color: #fff; margin-bottom: 8px;">Table (Page ${t.page}) — Mathematical Insights:</h4><ul style="margin-left: 20px; color: #58a6ff;">`;
+                t.mathematical_insights.forEach(mi => {
+                    html += `<li>${mi}</li>`;
+                });
+                html += `</ul>`;
+                html += `</div>`;
+            });
+            analyticsContent.innerHTML = html;
+        }
+
+        // Generate Summary via 4-Tool Pipeline
         generateBtn.addEventListener('click', async () => {
             if (!currentFile) {
                 showToast('Please upload a PDF document first.', true);
@@ -1068,7 +1204,7 @@
             }
 
             summarySpinner.style.display = 'flex';
-            spinnerText.textContent = 'Analyzing document hierarchy & synthesizing summary...';
+            spinnerText.textContent = 'Executing 4-Tool Pipeline (Synthesis & Tool 4 Fact-Checking)...';
             generateBtn.disabled = true;
 
             try {
@@ -1090,7 +1226,18 @@
                 lastRawSummary = data.summary;
                 summaryContent.innerHTML = marked.parse(data.summary);
                 summaryActions.style.display = 'flex';
-                showToast('Summary generated!');
+
+                // Activate Tool 4 card
+                cardTool4.classList.add('active');
+                if (data.verification) {
+                    cardTool4Desc.textContent = `Score: ${data.verification.fact_check_score}% Grounded (${data.verification.valid_citations} valid citations)`;
+                }
+
+                currentStructuredJson = data.structured_json;
+                renderJsonView();
+                renderAnalyticsView();
+
+                showToast('4-Tool Pipeline completed!');
             } catch (err) {
                 showToast(err.message, true);
                 summaryContent.innerHTML = `<div style="color: var(--primary-red); padding: 12px; background: rgba(255,75,75,0.1); border-radius: 8px;"><b>Error:</b> ${err.message}</div>`;
@@ -1120,6 +1267,18 @@
             }
         });
 
+        downloadJsonBtn.addEventListener('click', () => {
+            if (currentStructuredJson) {
+                const blob = new Blob([JSON.stringify(currentStructuredJson, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentFile ? currentFile.name : 'document'}_structured.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        });
+
         // Q&A Chat
         async function sendQuery() {
             const query = chatInput.value.trim();
@@ -1129,7 +1288,6 @@
                 return;
             }
 
-            // Append user bubble
             const userBubble = document.createElement('div');
             userBubble.className = 'chat-bubble user';
             userBubble.textContent = query;
@@ -1137,7 +1295,6 @@
             chatInput.value = '';
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            // Loading bubble
             const assistBubble = document.createElement('div');
             assistBubble.className = 'chat-bubble assistant';
             assistBubble.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching document pages & formulating answer...';
@@ -1177,7 +1334,7 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail);
 
-                let html = `<h3 style="margin-bottom: 12px; color: #fff;">Document Structure: ${data.filename}</h3>`;
+                let html = `<h3 style="margin-bottom: 12px; color: #fff;">Document Structure: ${data.document_metadata ? data.document_metadata.filename : 'Document'}</h3>`;
                 data.pages.forEach(p => {
                     const headingTexts = p.headings.map(h => `<code style="color: #58a6ff;">${h.text}</code>`).join(', ') || '(No major headings)';
                     html += `
@@ -1188,9 +1345,8 @@
                             </div>
                             <div class="accordion-content">
                                 <p><b>Headings:</b> ${headingTexts}</p>
-                                ${p.tables.length > 0 ? '<div style="margin-top: 8px;"><b>Tables:</b>' + p.tables.map(t => marked.parse(t.markdown)).join('') + '</div>' : ''}
-                                <p style="margin-top: 8px;"><b>Text Preview:</b></p>
-                                <pre style="background: #1e2330; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 0.78rem;">${p.raw_text_preview}...</pre>
+                                <p style="margin-top: 8px;"><b>Clean Text Preview:</b></p>
+                                <pre style="background: #1e2330; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 0.78rem;">${(p.clean_text || p.raw_text).slice(0, 1000)}...</pre>
                             </div>
                         </div>
                     `;

@@ -50,23 +50,31 @@ def handle_inspect(args):
 
 
 def handle_summarize(args):
-    console.print(f"[bold green]Starting Analysis for:[/] {args.pdf_path}")
+    from agent.tool_orchestrator import ToolDrivenOrchestrator
+    console.print(f"[bold green]Starting 4-Tool Pipeline Analysis for:[/] {args.pdf_path}")
     llm = GeminiLLMClient(api_key=args.api_key, model_name=args.model)
     if llm.is_available():
         console.print(f"[bold cyan]Connected to Google Gemini ({llm.model_name})[/]")
     else:
         console.print("[yellow]Gemini API key not detected. Running in heuristic mode.[/]")
 
-    with console.status("[bold green]Extracting and analyzing PDF document..."):
-        extractor = PDFExtractor(args.pdf_path)
-        doc = extractor.extract()
-        summarizer = PDFSummarizer(llm)
-        level = SummaryLevel(args.level.lower())
-        summary_text = summarizer.summarize(
-            doc,
-            level=level,
-            custom_instructions=args.custom_prompt
-        )
+    with console.status("[bold green]Executing 4-Tool Pipeline (JSON Formatter -> Sanitizer -> Analytics -> Grounding)..."):
+        orchestrator = ToolDrivenOrchestrator(llm)
+        res = orchestrator.process_pdf(args.pdf_path, level=args.level.lower(), custom_instructions=args.custom_prompt)
+        summary_text = res["summary"]
+
+    # Print Tool Traces
+    console.print("\n[bold yellow]══ 4-Tool Execution Traces ══[/]")
+    for t in res.get("tool_traces", []):
+        console.print(f"  [bold green]✓ Step {t['step']}[/] [cyan]{t['tool']}[/]: {t['message']}")
+
+    # Print Table Analytics
+    ta = res.get("table_analytics", {}).get("analyses", [])
+    if ta:
+        console.print("\n[bold magenta]══ Tool 3: Mathematical Table Analytics ══[/]")
+        for t in ta:
+            for mi in t.get("mathematical_insights", []):
+                console.print(f"  • {mi}")
 
     console.print("\n" + "=" * 60 + "\n")
     console.print(Markdown(summary_text))
